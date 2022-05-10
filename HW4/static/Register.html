@@ -1,0 +1,123 @@
+<!--文件名：Register.html，保存于static文件夹-->
+<!doctype html>
+<html lang="en">
+    <head><meta charset="UTF-8"><title>注册</title></head>
+    <script type="text/javascript" src="static/js/jquery-3.6.0.min.js"></script>
+    <style type=text/css>
+        a{text-decoration: none;}
+        html{   
+            width: 100%;   
+            height: 100%;   
+            overflow: hidden;   
+            font-style: sans-serif;   
+        }   
+        body{   
+            width: 100%;   
+            height: 100%;   
+            font-family: 'Open Sans',sans-serif;   
+            margin: 0;   
+            background-color: #4A374A;   
+        }   
+        #register{   
+            position: fixed;   
+            top: 45%;   
+            left:50%;   
+            margin: -150px 0 0 -150px;   
+            width: 600px;   
+            height: 600px;   
+        }   
+        #register h1{   
+            color: #fff;   
+            left:50%; 
+            width: 300px;
+            text-shadow:0 0 10px;   
+            letter-spacing: 1px;   
+            text-align: center;   
+        }   
+        h1{   
+            font-size: 2em;   
+            margin: 0.67em 0;   
+        }   
+        input{   
+            width: 278px;   
+            height: 18px;   
+            margin-bottom: 10px;   
+            outline: none;   
+            padding: 10px;   
+            font-size: 20px;   
+            color: #fff;   
+            text-shadow:1px 1px 1px;   
+            border-top: 1px solid #312E3D;   
+            border-left: 1px solid #312E3D;   
+            border-right: 1px solid #312E3D;   
+            border-bottom: 1px solid #56536A;   
+            border-radius: 4px;   
+            background-color: #2D2D3F;   
+            text-align: center;
+        }
+        .but{   
+            cursor: pointer;
+            width: 300px;   
+            min-height: 20px;   
+            display: block;   
+            background-color: #4a77d4;   
+            border: 1px solid #3762bc;   
+            color: #fff;   
+            padding: 9px 14px;   
+            font-size: 16px;   
+            line-height: normal;   
+            border-radius: 5px;   
+            margin: 0;   
+        } 
+        .hideIt{display:none}
+        .lightIt{display:inline;color:rgb(131, 115, 255); font-size: 17px;  }
+    </style>
+    <body>
+        <div id="register">  
+            <h1>Register</h1>
+            <form action="/Register_check" method="post">
+                <input type="text" required="required" placeholder="用户名" name="netName" id="netName">
+                    <span id="checkName" class="hideIt"></span><br>
+                <input type="text" required="required" placeholder="密码" name="pwd1" id="pwd1">  
+                <input type="text" required="required" placeholder="确认密码" name="pwd2" id="pwd2"> 
+                    <span id="checkPassWord" class="hideIt"></span><br>
+                <button class="but" type="submit">确认注册</button> 
+            </form>
+            <a href="/"><button class="but" type="button" style="margin-top: 10px;">返回登录</button></a>
+        </div>
+        <script type="text/javascript">
+            $("input").attr({maxlength:"25" ,oninput:"check()"}); //设置输入最长为25，且实时检查输入是否合理
+            function check()
+            {
+                var netName=$("#netName").val();
+                var pwd1=$("#pwd1").val();
+                var pwd2=$("#pwd2").val();
+                $.post("/checkName",{netName:netName},function(rtnSvr){
+                    if(rtnSvr=="1")
+                        $("#checkName").removeClass("lightIt").addClass("hideIt");
+                    else
+                        $("#checkName").html("(该用户名已被注册，请重新输入)").removeClass("hideIt").addClass("lightIt");
+                    })
+                if(pwd1!=pwd2 && pwd2!='') $("#checkPassWord").html("(两次密码输入不一致)").removeClass("hideIt").addClass("lightIt");
+                else $("#checkPassWord").removeClass("lightIt").addClass("hideIt");
+            }
+            
+            $("form").submit(function()
+            {
+                var pwd1=$("#pwd1").val();
+                var pwd2=$("#pwd2").val();
+                var nameState=$('#checkName').html()
+
+                if (pwd1!=pwd2 || nameState=="(该用户名已被注册，请重新输入)")
+                {
+                    alert('用户名不可用，或两次密码不一致，请修改后再提交')
+                   return false; //阻止表单提交
+                }
+                else
+                {
+                    return true;
+                }
+            });
+        </script>
+    </body>
+</html>

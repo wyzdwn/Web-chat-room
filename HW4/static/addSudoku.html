@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>添加数独数据</title>
+        <script type="text/javascript" src="./static/js/jquery-3.6.0.min.js"></script>
+        <style>
+            body{width:400px;margin:0px auto}
+            td{width: 10mm;height: 10mm;text-align: center;cursor: text;}
+            .imghand{cursor: pointer;}
+            .select{background-color: chartreuse;}
+            input{border: 0px;text-align: center;font-size: 26px;height: 30px;width: 30px;size: '1'}
+            .t_border{border-top:4px solid black}
+		    .b_border{border-bottom:4px solid black}
+            .l_border{border-left: 4px solid black}
+            .r_border{border-right: 4px solid black}
+            .wrong{background-color: red;color: gold;}
+        </style>
+    </head>
+    <body>
+        <p>
+            请按照数独的规则，在以下数独表格中填入数字1-9，填完后按下方“保存数据”的按钮即可
+        </p>
+        <!--数独的表格-->
+        <table cellpadding='0' cellspacing='0' id="Sudoku" border='1' class="t_border b_border l_border r_border" style="margin:0px auto">
+            <tr>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td><input></td>
+            </tr>
+            <tr>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td><input></td>
+            </tr>
+            <tr>
+                <td class="b_border"><input></td><td class="b_border"><input></td><td class="b_border r_border"><input></td>
+                <td class="b_border"><input></td><td class="b_border"><input></td><td class="b_border r_border"><input></td>
+                <td class="b_border"><input></td><td class="b_border"><input></td><td class="b_border"><input></td>
+            </tr>
+            <tr>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td><input></td>
+            </tr>
+            <tr>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td><input></td>
+            </tr>
+            <tr>
+                <td class="b_border"><input></td><td class="b_border"><input></td><td class="b_border r_border"><input></td>
+                <td class="b_border"><input></td><td class="b_border"><input></td><td class="b_border r_border"><input></td>
+                <td class="b_border"><input></td><td class="b_border"><input></td><td class="b_border"><input></td>
+            </tr>
+            <tr>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td><input></td>
+            </tr>
+            <tr>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td><input></td>
+            </tr>
+            <tr>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td><input></td>
+            </tr>
+        </table>
+
+        <p align="center">  <!--按钮：保存数据，返回到首页-->
+            <img width="120" src='./static/img/saveData.png' alt="保存Sudoku数据到服务器" id="btnSaveData" class="imghand" >
+            <img width="120" src='./static/img/clear.png' alt="清空表格" id="clear" class="imghand" >
+            <a href="/"><img width="120" src='./static/img/return.png' alt="返回到首页" id="return" class="imghand" ></a>
+        </p>
+
+        <script type="text/javascript">
+
+            //初始化一些内容，这里是设置单元格内的输入框的一些属性
+            $(document).ready(function(){
+                $("input").attr({maxlength:"1" ,oninput:"[value=value.replace(/[^1-9]/g,''),check()]"}); //check()的定义在下面，用来检查数独中有没有不符合规则的数
+            })
+
+            /*鼠标移到保存按钮上的效果↓*/
+            $('#btnSaveData').mouseover(function(){
+                $(this).attr('src','./static/img/saveData02.png')
+            })
+            $('#btnSaveData').mouseout(function(){
+                $(this).attr('src','./static/img/saveData.png')
+                $(this).html(InputEvent)
+            })
+            /*鼠标移到保存按钮上的效果↑*/
+
+            /*鼠标移到清空按钮上的效果↓*/
+            $('#clear').mouseover(function(){
+                $(this).attr('src','./static/img/clear02.png')
+            })
+            $('#clear').mouseout(function(){
+                $(this).attr('src','./static/img/clear.png')
+                $(this).html(InputEvent)
+            })
+            /*鼠标移到清空按钮上的效果↑*/
+
+            /*鼠标移到返回按钮上的效果↓*/
+            $('#return').mouseover(function(){
+                $(this).attr('src','./static/img/return02.png')
+            })
+            $('#return').mouseout(function(){
+                $(this).attr('src','./static/img/return.png')
+                $(this).html(InputEvent)
+            })
+            /*鼠标移到返回按钮上的效果↑*/
+
+            //单击保存按钮保存
+            $('#btnSaveData').click(function(){
+                if($('.wrong').length!=0) 
+                {
+                    alert('数据不合规则，请修正后再保存')
+                    return ''
+                }
+                var data=''
+                $('input').each(function(){
+                    if($(this).val()) data+=$(this).val()
+                    else data+='0'
+                })
+                alert(data)
+                $.post('/save',{save_data:data},function(return_msg){
+                    alert(return_msg)
+                })
+            })
+
+            //单击清空按钮清空数独表格
+            $('#clear').click(function(){
+                $('.wrong').removeClass('wrong')
+                $('input').val('')
+            })
+
+            //选中某个单元格
+            $('#Sudoku').on('mouseover','td',function(){
+                $('.select').removeClass('select')
+                $(this).addClass('select')
+            })
+
+            //检查数独中有无不符合规则的数
+            function check()
+            {
+                $('.wrong').removeClass('wrong')
+                var data=''
+                $('input').each(function(){
+                    if($(this).val()) data+=$(this).val()
+                    else data+='0'
+                })
+                
+                function check_col()
+                {
+                    for(var i=0;i<9;i++)
+                    {
+                        var cnt=''
+                        for(var j=0;j<9;j++)
+                        {
+                            var c=data[i+j*9]
+                            if(c==0) continue
+                            if(cnt.indexOf(c)!=-1)
+                            {
+                                var k=0
+                                $('input').each(function(){
+                                    if(k%9==i)
+                                    {
+                                        $(this).addClass('wrong')
+                                    }
+                                    k++
+                                })
+                            }
+                            cnt+=c
+                        }
+                    }
+                }
+                function check_row()
+                {
+                    for(var i=0;i<9;i++)
+                    {
+                        var cnt=''
+                        for(var j=0;j<9;j++)
+                        {
+                            var c=data[i*9+j]
+                            if(c==0) continue
+                            if(cnt.indexOf(c)!=-1)
+                            {
+                                var k=0
+                                $('input').each(function(){
+                                    if(Math.floor(k/9)==i)
+                                    {
+                                        $(this).addClass('wrong')
+                                    }
+                                    k++
+                                })
+                            }
+                            cnt+=c
+                        }
+                    }
+                }
+                function check_block() 
+                {
+                    for(var i=0;i<9;i++)
+                    {
+                        var cnt=''
+                        var index_i=Math.floor(i/3)*27+(i%3)*3
+                        for(var j=0;j<9;j++)
+                        {
+                            var index_j=Math.floor(j/3)*9+j%3
+                            var c=data[index_i+index_j]
+                            if(c==0) continue
+                            if(cnt.indexOf(c)!=-1)
+                            {
+                                var k=0
+                                $('input').each(function(){
+                                    if(Math.floor(k/27)*3+Math.floor((k%9)/3)==i)
+                                    {   
+                                        $(this).addClass('wrong')
+                                    }
+                                    k++
+                                })
+                            }
+                            cnt+=c
+                        }
+                    } 
+                }
+                check_col()
+                check_row()
+                check_block()
+            }
+
+        </script>
+    </body>
+</html>

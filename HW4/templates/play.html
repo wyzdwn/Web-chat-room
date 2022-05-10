@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>数独游戏</title>
+        <script type="text/javascript" src="./static/js/jquery-3.6.0.min.js"></script>
+        <style>
+            body{width:400px;margin:0px auto}
+            td{width: 10mm;height: 10mm;text-align: center;}
+            .canfill{cursor: text;color: black;}
+            .imghand{cursor: pointer;}
+            .select{background-color: gold;}
+            input{border: 0px;text-align: center;font-size: 26px;height: 30px;width: 30px;size: '1';cursor: default;}
+            .t_border{border-top:4px solid black}
+		    .b_border{border-bottom:4px solid black}
+            .l_border{border-left: 4px solid black}
+            .r_border{border-right: 4px solid black}
+            .wrong{background-color: red;color: gold;}
+            .wrong_canfill{background-color: purple;color: gold;}
+        </style>
+    </head>
+    <body>
+        <p align="center">  <!--tip-->
+            请按照数独的规则，在以下数独表格中填入数字1-9
+        </p>
+
+        <!--网页内计时器-->
+        <table cellpadding='0' cellspacing='0' border='1' id="time" class="t_border b_border l_border r_border" style="margin: auto;">
+            <tr>
+                <td style="width: 25mm; font-size: 22px;">用时</td>
+                <td style="width: 50mm; font-size: 22px;"><time id="used_time" >00:00:00</time></td>
+            </tr>
+        </table>
+
+        <!--游戏胜利后的图片，一开始设定为hidden-->
+        <br>
+        <img width='400' height='400' src='./static/img/win.png' alt='游戏胜利' id='win' hidden="hidden">
+
+        <!--数独的表格-->
+        <table cellpadding='0' cellspacing='0' id="Sudoku" border='1' class="t_border b_border l_border r_border" style="margin: auto;" align="center">
+            <tr>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td><input></td>
+            </tr>
+            <tr>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td><input></td>
+            </tr>
+            <tr>
+                <td class="b_border"><input></td><td class="b_border"><input></td><td class="b_border r_border"><input></td>
+                <td class="b_border"><input></td><td class="b_border"><input></td><td class="b_border r_border"><input></td>
+                <td class="b_border"><input></td><td class="b_border"><input></td><td class="b_border"><input></td>
+            </tr>
+            <tr>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td><input></td>
+            </tr>
+            <tr>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td><input></td>
+            </tr>
+            <tr>
+                <td class="b_border"><input></td><td class="b_border"><input></td><td class="b_border r_border"><input></td>
+                <td class="b_border"><input></td><td class="b_border"><input></td><td class="b_border r_border"><input></td>
+                <td class="b_border"><input></td><td class="b_border"><input></td><td class="b_border"><input></td>
+            </tr>
+            <tr>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td><input></td>
+            </tr>
+            <tr>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td><input></td>
+            </tr>
+            <tr>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td class="r_border"><input></td>
+                <td><input></td><td><input></td><td><input></td>
+            </tr>
+        </table>    
+
+        <p align="center">  <!--按钮：保存数据，下一局游戏，返回到首页-->
+            <img width="120" src='./static/img/saveData.png' alt="保存Sudoku数据到服务器" id="btnSaveData" class="imghand" >
+            <img width="120" src='./static/img/next.png' alt="下一局游戏" id="next" class="imghand" hidden>
+            <a href="/"><img width="120" src='./static/img/return.png' alt="返回到首页" id="return" class="imghand" ></a>
+        </p>
+        
+        <p hidden id="data">{{data|safe}}</p>   <!--从服务器获得的初始数独数据，放在这里方便使用，但是要隐藏起来-->
+
+        <script type="text/javascript"> //游戏的功能设计部分
+
+            start=new Date()    //游戏开始时间
+            function time_align(num) //时间补0对齐，比如将1:2:3变成01:02:03
+            {
+                return (Array(2).join(0) + num).slice(-2)
+            }
+            function change_time()  //设定网页内计时器
+            {
+                var now=new Date()
+                h=(now.getHours()-start.getHours())*3600 //时、分都先转换成秒，之后再转换回来，从而可以处理秒（分，时）数小于开始时间的情况
+                m=(now.getMinutes()-start.getMinutes())*60
+                s=(now.getSeconds()-start.getSeconds())
+                alltime=h+m+s
+                h=time_align(Math.floor(alltime/3600))
+                m=time_align(Math.floor((alltime%3600)/60))
+                s=time_align(alltime%60)
+                time_str=h+':'+m+':'+s
+                $('#used_time').text(time_str)
+            }
+            interval_1=setInterval('change_time()',500) //网页内计时器
+
+            //初始化一些内容，这里是设置单元格内的输入框的一些属性以及将数据填充到数独表格里
+            $(document).ready(function(){
+                //alert(start)
+                $("input").attr({maxlength:"1" ,oninput:"[value=value.replace(/[^1-9]/g,''),check()]"}); //check()的定义在下面，用来检查数独中有没有不符合规则的数
+                var data=$('#data').text()
+                var cnt=0
+                $('input').each(function(){
+                    var c=data[cnt]
+                    if(c=="0")
+                    {
+                        c=''
+                        $(this).parent().addClass('canfill')
+                        $(this).addClass('canfill')
+                    }
+                    else 
+                    {
+                        $(this).attr('disabled','disabled')
+                        $(this).parent().css('background','peachpuff')
+                    }
+                    $(this).val(c)
+                    cnt++
+                })
+            })
+
+            /*鼠标移到保存按钮上的效果↓*/
+            $('#btnSaveData').mouseover(function(){
+                $(this).attr('src','./static/img/saveData02.png')
+            })
+            $('#btnSaveData').mouseout(function(){
+                $(this).attr('src','./static/img/saveData.png')
+                $(this).html(InputEvent)
+            })
+            /*鼠标移到保存按钮上的效果↑*/
+
+            /*鼠标移到返回按钮上的效果↓*/
+            $('#return').mouseover(function(){
+                $(this).attr('src','./static/img/return02.png')
+            })
+            $('#return').mouseout(function(){
+                $(this).attr('src','./static/img/return.png')
+                $(this).html(InputEvent)
+            })
+            /*鼠标移到返回按钮上的效果↑*/
+
+            /*鼠标移到下一局按钮上的效果↓*/
+            $('#next').mouseover(function(){
+                $(this).attr('src','./static/img/next02.png')
+            })
+            $('#next').mouseout(function(){
+                $(this).attr('src','./static/img/next.png')
+                $(this).html(InputEvent)
+            })
+            /*鼠标移到下一局按钮上的效果↑*/
+
+            //单击保存按钮保存
+            $('#btnSaveData').click(function(){
+                if($('.wrong').length!=0) 
+                {
+                    alert('数据不合规则，请修正后再保存')
+                    return ''
+                }
+                var data=''
+                $('input').each(function(){
+                    if($(this).val()) data+=$(this).val()
+                    else data+='0'
+                })
+                $.post('/save',{save_data:data},function(return_msg){
+                    alert(return_msg)
+                })
+            })
+
+            //单击下一局按钮
+            $('#next').click(function(){
+                $('#btnSaveData').attr('hidden',false)
+                $("#Sudoku").attr("hidden",false);
+                $('#win').attr('hidden','hidden')
+                $('#next').attr('hidden','hidden')
+                
+                $.post('/next',function(return_msg){
+                    var data=return_msg
+                    $('#data').text(data)
+                    var cnt=0
+                    $('input').removeClass('canfill')
+                    $('input').attr('disabled',false)
+                    $('input').parent().css('background','white')
+                    $('input').each(function(){
+                        var c=data[cnt]
+                        if(c=="0")
+                        {
+                            c=''
+                            $(this).addClass('canfill')
+                        }
+                        else 
+                        {
+                            $(this).attr('disabled','disabled')
+                            $(this).parent().css('background','peachpuff')
+                        }
+                        $(this).val(c)
+                        cnt++
+                    })
+                })
+                $('#used_time').text('00:00:00')
+                start=new Date()
+                interval_1=setInterval('change_time()',500)
+            })
+
+            //选中某个单元格
+            $('#Sudoku').on('mouseover','td',function(){
+                $('.select').removeClass('select')
+                $(this).addClass('select')
+            })
+
+            //检查数独中有无不符合规则的数
+            function check()
+            {
+                $('.wrong').removeClass('wrong')
+                $('.wrong_canfill').removeClass('wrong_canfill')
+                var data=''
+                $('input').each(function(){
+                    if($(this).val()) data+=$(this).val()
+                    else data+='0'
+                })
+                function check_col()
+                {
+                    for(var i=0;i<9;i++)
+                    {
+                        var cnt=''
+                        for(var j=0;j<9;j++)
+                        {
+                            var c=data[i+j*9]
+                            if(c==0) continue
+                            if(cnt.indexOf(c)!=-1)
+                            {
+                                var k=0
+                                $('input').each(function(){
+                                    if(k%9==i)
+                                    {
+                                        if($(this).is('.canfill')&&$(this).val()) $(this).addClass('wrong_canfill')
+                                        else $(this).addClass('wrong')
+                                    }
+                                    k++
+                                })
+                            }
+                            cnt+=c
+                        }
+                    }
+                }
+                function check_row()
+                {
+                    for(var i=0;i<9;i++)
+                    {
+                        var cnt=''
+                        for(var j=0;j<9;j++)
+                        {
+                            var c=data[i*9+j]
+                            if(c==0) continue
+                            if(cnt.indexOf(c)!=-1)
+                            {
+                                var k=0
+                                $('input').each(function(){
+                                    if(Math.floor(k/9)==i)
+                                    {
+                                        if($(this).is('.canfill')&&$(this).val()) $(this).addClass('wrong_canfill')
+                                        else $(this).addClass('wrong')
+                                    }
+                                    k++
+                                })
+                            }
+                            cnt+=c
+                        }
+                    }
+                }
+                function check_block() 
+                {
+                    for(var i=0;i<9;i++)
+                    {
+                        var cnt=''
+                        var index_i=Math.floor(i/3)*27+(i%3)*3
+                        for(var j=0;j<9;j++)
+                        {
+                            var index_j=Math.floor(j/3)*9+j%3
+                            var c=data[index_i+index_j]
+                            if(c==0) continue
+                            if(cnt.indexOf(c)!=-1)
+                            {
+                                var k=0
+                                $('input').each(function(){
+                                    if(Math.floor(k/27)*3+Math.floor((k%9)/3)==i)
+                                    {   
+                                        if($(this).is('.canfill')&&$(this).val()) $(this).addClass('wrong_canfill')
+                                        else $(this).addClass('wrong')
+                                    }
+                                    k++
+                                })
+                            }
+                            cnt+=c
+                        }
+                    } 
+                }
+                check_col()
+                check_row()
+                check_block()
+                //alert($('.wrong').length)
+                //alert(data.indexOf('0'))
+                if(data.indexOf('0')==-1&&$('.wrong').length==0) //数独中没有还未填写的数了，且没有错误的数，即意味着数独填写完成
+                {   
+                    $.post('/time_record',{data:$('#data').text(),used_time:alltime})
+                    clearInterval(interval_1)
+                    $('#btnSaveData').attr('hidden','hidden')
+                    $("#Sudoku").attr("hidden",'hidden');
+                    $('#win').attr('hidden',false)
+                    $('#next').attr('hidden',false)
+                }
+            }
+
+        </script>
+        
+    </body>
+</html>

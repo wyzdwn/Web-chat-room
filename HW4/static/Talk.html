@@ -1,0 +1,61 @@
+<!--文件名：Talk.html，保存于static文件夹-->
+<!doctype html>
+
+<html lang="en">
+    <head><meta charset="UTF-8"><title>Talk</title></head>
+    <script type="text/javascript" src="static/js/jquery-3.6.0.min.js"></script>
+    <style type="text/css">
+        #talkArea,#thisTalk{border:1px solid black;width:400px;}
+        #talkArea{height:120px;overflow-y:auto;}/*overflow-y用于设置垂直滚动条*/
+        #thisTalk{height:80px}
+        .thisSide{color:blue}/*我方聊天内容颜色为blue*/
+        .thatSide{color:red}/*对方聊天内容颜色为red*/
+    </style>
+    <body>
+        我方编号：<input type=text name="thisSide" id="thisSide"><br><br>
+        对方编号：<input type=text name="thatSide" id="thatSide"><br><br>
+        聊天显示区：
+        <div id="talkArea"></div>
+        输入聊天内容：<br>
+        <textarea id="thisTalk"></textarea><br>
+        <button id="Send">发送</button>
+        <script type="text/javascript">
+            var thisSide="",thatSide="";
+            /*判断我方和对方编号是否都输入，且编号不能相等。如果能聊天则返回值为true，否则false*/
+            function readyTalk(){
+                thisSide=$("#thisSide").val();/*获得编号*/
+                thisSide=$.trim(thisSide);/*清除两端空格*/
+                thatSide=$("#thatSide").val();/*获得编号*/
+                thatSide=$.trim(thatSide);/*清除两端空格*/
+
+                if(thisSide.length==0 || thatSide.length==0)return false;
+                if(thisSide==thatSide)return false;
+                return true;
+            }
+            $("#Send").click(function(){
+                if (readyTalk()==false)return false;/*如果双方编号没有准备好*/
+
+                var willSendMsg=$("#thisTalk").val();
+                willSendMsg=$.trim(willSendMsg);/*删除字符串前后的空格*/
+
+                if (willSendMsg.length==0)return false;/*如果没有聊天内容*/
+                /*生成聊天数据，包含我方编号，对方编号以及聊天内容*/
+                var sendData={fromSide:thisSide,toSide:thatSide,Msg:willSendMsg};
+
+                $("#talkArea").append("<div class='thisSide'>WO说："+willSendMsg+"</div>");
+                $("#thisTalk").val("");/*清空聊天内容。上一行代码将聊天内容显示到内容区*/
+
+                $.get("/saveMsg",sendData);/*发送数据到服务器后端，不处理返回值，默认发送会成功*/
+            })
+
+            function getMsgFromSvr(){/*从服务器获得聊天信息，供定时函数调用*/
+                if (readyTalk()==false)return false;/*如果编号没有准备好，则不执行后续语句*/
+                ThisThatSide={thisSide:thisSide,thatSide:thatSide};/*获得双方编号*/
+                $.get("/sendMsg",ThisThatSide,function(rtnFromSvr){
+                    $("#talkArea").append(rtnFromSvr);
+                });/*从服务器后端取得信息，并追加到聊天区*/
+            }
+            setInterval("getMsgFromSvr()",3000);/*每3秒钟从服务器取得信息*/
+        </script>
+    </body>
+</html>
